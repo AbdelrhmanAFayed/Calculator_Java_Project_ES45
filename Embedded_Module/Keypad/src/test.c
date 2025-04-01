@@ -1,5 +1,4 @@
 /* This Application is testing the Keypad driver using LCD  */
-
 #include "STD_TYPES.h"
 #include "BIT_MATH.h"
 #include "MDIO.h"
@@ -24,59 +23,16 @@ int main(void)
 	while(1) 
     {
 		HKEYPAD_enuGetPressedKey(&KeyValue,KEYPAD_ONE);
-		switch(KeyValue)
+		if(KeyValue != HKEYPAD_NO_KEY_PRESSED)
 		{
-			case '0':
-				HLCD_enuWriteNumber(0,LCD_ONE);
-			break;
-			case '1':
-				HLCD_enuWriteNumber(1,LCD_ONE);
-			break;
-			case '2':
-				HLCD_enuWriteNumber(2,LCD_ONE);
-			break;
-			case '3':
-				HLCD_enuWriteNumber(3,LCD_ONE);
-			break;
-			case '4':
-				HLCD_enuWriteNumber(4,LCD_ONE);
-			break;
-			case '5':
-				HLCD_enuWriteNumber(5,LCD_ONE);
-			break;
-			case '6':
-				HLCD_enuWriteNumber(6,LCD_ONE);
-			break;
-			case '7':
-				HLCD_enuWriteNumber(7,LCD_ONE);
-			break;
-			case '8':
-				HLCD_enuWriteNumber(8,LCD_ONE);
-			break;
-			case '9':
-				HLCD_enuWriteNumber(9,LCD_ONE);
-			break;
-			case 'C':
-				Clear_LCD();
-			break;
-			case '+':
-				HLCD_enuWriteData('+',LCD_ONE);
-			break;
-			case '-':
-				HLCD_enuWriteData('-',LCD_ONE);
-			break;
-			case '*':
-				HLCD_enuWriteData('*',LCD_ONE);
-			break;
-			case '/':
-				HLCD_enuWriteData('/',LCD_ONE);
-			break;
-			case '=':
-				HLCD_enuWriteData('=',LCD_ONE);
-			break;
-			default :
-				/* Do Nothing */
-			break;	
+			if(KeyValue == 'C')
+			{
+				Clear_LCD();		
+			}
+			else
+			{
+				HLCD_enuWriteData(KeyValue,LCD_ONE);
+			}
 		}
 	}
 	return 0;
