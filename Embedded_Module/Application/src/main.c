@@ -27,7 +27,7 @@ int main(void)
     HKEYPAD_enuInit();
    
     u8 Buff = HKEYPAD_NO_KEY_PRESSED;
-
+    u8 last_key = HKEYPAD_NO_KEY_PRESSED;
     
     while (1)
     {
@@ -36,13 +36,19 @@ int main(void)
         /*Get current pressed key*/
         HKEYPAD_enuGetPressedKey(&Buff, 0);
 
-      
+        if(Buff == last_key)
+        {
             
-        
+        }
+        else
+        {
         UART_enuTransmit(&Buff, sizeof(Buff));
+        }
+        
+        last_key = Buff;
         _delay_ms(100);
 
-      }
+    }
     
 
     return 0 ;
