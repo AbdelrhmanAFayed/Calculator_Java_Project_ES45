@@ -20,7 +20,7 @@ public class Serial_Handler {
     private int bufferLength = 0;
     private Thread readThread;
     private boolean readError = false;
-    private char lastKey ;
+    private char lastKey;
 
     /*
     openPort checks the available ports and chooses the first one to open
@@ -89,8 +89,8 @@ public class Serial_Handler {
                         }
 
                         char c = (char) data;
-                        lastKey = c ;
-                        
+                        lastKey = c;
+
                         if ((c >= '0' && c <= '9') || c == '.' || c == 'K') {
                             if (bufferLength < buffer.length) {
                                 buffer[bufferLength++] = (byte) c; // Add the digit, dot, or 'K'
@@ -113,16 +113,14 @@ public class Serial_Handler {
                                         break; // Exit the loop after finding the first non-'K' character
                                     }
                                 }
-                            }
-                            else 
-                            {
+                            } else {
                                 buffer[bufferLength++] = '0';
                                 buffer[bufferLength++] = (byte) c; // Add the operator at the start
                                 System.out.println("Added operator at start: " + c); // Log when adding operator at start
-                            
+
                             }
                         } else {
-                                
+
                         }
                     }
 
@@ -147,6 +145,38 @@ public class Serial_Handler {
         readThread = new Thread(new ReaderThread());
         readThread.start();
         return true;
+    }
+
+    public synchronized void insertCharToBuffer(char c) {
+        if ((c >= '0' && c <= '9') || c == '.' || c == 'K') {
+            
+            if (bufferLength < buffer.length) {
+                buffer[bufferLength++] = (byte) c;
+            }
+        } else if (c == '+' || c == '-' || c == '*' || c == '/' || c == '=') {
+            if (bufferLength > 0) {
+                
+                for (int i = bufferLength - 1; i >= 0; i--) {
+                    byte lastChar = buffer[i];
+
+                    if (lastChar != 'K') {
+                      
+                        if (lastChar == '+' || lastChar == '-' || lastChar == '*' || lastChar == '/' || lastChar == '=') {
+                            buffer[i] = (byte) c; 
+                        } else {
+                            buffer[bufferLength++] = (byte) c;
+                        }
+                        break; 
+                    }
+                }
+            } else {
+               
+                if (bufferLength < buffer.length) {
+                    buffer[bufferLength++] = (byte) '0';  // Add a default value before the operator
+                    buffer[bufferLength++] = (byte) c; // Add the operator
+                }
+            }
+        }
     }
 
     /*
@@ -211,6 +241,12 @@ public class Serial_Handler {
         }
 
         return lastKey;
+    }
+
+    /*Clear the data stored*/
+    public void clearBuffer() {
+        bufferLength = 0;  // Reset the buffer length
+        System.out.println("Buffer cleared");
     }
 
     /*

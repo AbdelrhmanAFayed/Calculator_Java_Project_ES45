@@ -35,12 +35,13 @@ public class PrimaryController implements Initializable {
         serial = new Serial_Handler(); 
         
         serial.init(9600);
+     
         // TODO
     }    
 
     @FXML
     private void BtnHand(MouseEvent event) {
-        
+      
        tf.setText(new String(serial.readBuffer()));
     }
 
