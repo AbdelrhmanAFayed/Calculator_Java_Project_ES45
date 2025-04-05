@@ -26,26 +26,50 @@ public class Serial_Handler {
     returns False if it fails to open Port
      */
     public boolean openPort(int baudRate) {
-
-        SerialPort[] ports = SerialPort.getCommPorts(); //get available Ports
+        SerialPort[] ports = SerialPort.getCommPorts();
 
         if (ports.length == 0) {
             System.out.println("No serial ports found.");
             return false;
         }
 
-        serialPort = ports[0];
+
+
+        for (SerialPort port : ports) {
+            String name = port.getSystemPortName();
+
+            if (name.contains("ttyUSB") || name.startsWith("COM")) {
+                serialPort = port;
+                break; 
+            } else if (serialPort == null) {
+                serialPort = port; 
+            }
+        }
+
+       
+        if (serialPort == null) {
+            System.err.println("No suitable serial port found.");
+            return false;
+        }
+
         serialPort.setBaudRate(baudRate);
         serialPort.setNumDataBits(8);
         serialPort.setParity(SerialPort.NO_PARITY);
         serialPort.setNumStopBits(SerialPort.ONE_STOP_BIT);
+        serialPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_SEMI_BLOCKING, 1000, 1000);
 
         if (serialPort.openPort()) {
-            inputStream = serialPort.getInputStream(); // Get input stream
-            System.out.println("Opened: " + serialPort.getSystemPortName());
+            try {
+                inputStream = serialPort.getInputStream();
+            } catch (Exception e) {
+                System.err.println("Failed to get input stream: " + e.getMessage());
+                return false;
+            }
+
+            System.out.println("Opened port: " + serialPort.getSystemPortName());
             return true;
         } else {
-            System.err.println("Failed to open serial port.");
+            System.err.println("Failed to open port: " + serialPort.getSystemPortName());
             return false;
         }
     }
