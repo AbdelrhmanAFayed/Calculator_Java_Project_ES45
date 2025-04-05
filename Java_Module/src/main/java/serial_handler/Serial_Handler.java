@@ -5,6 +5,7 @@
 package serial_handler;
 
 import com.fazecast.jSerialComm.*;
+import java.io.IOException;
 import java.io.InputStream;
 
 /**
@@ -19,7 +20,7 @@ public class Serial_Handler {
     private int bufferLength = 0;
     private Thread readThread;
     private boolean readError = false;
-
+    private char lastKey ;
 
     /*
     openPort checks the available ports and chooses the first one to open
@@ -33,20 +34,17 @@ public class Serial_Handler {
             return false;
         }
 
-
-
         for (SerialPort port : ports) {
             String name = port.getSystemPortName();
 
             if (name.contains("ttyUSB") || name.startsWith("COM")) {
                 serialPort = port;
-                break; 
+                break;
             } else if (serialPort == null) {
-                serialPort = port; 
+                serialPort = port;
             }
         }
 
-       
         if (serialPort == null) {
             System.err.println("No suitable serial port found.");
             return false;
@@ -84,18 +82,57 @@ public class Serial_Handler {
             try {
                 while (serialPort != null && serialPort.isOpen() && inputStream != null) {
                     if (inputStream.available() > 0) {
-                        int bytesRead = inputStream.read(buffer, bufferLength, buffer.length - bufferLength);
+                        int data = inputStream.read(); // Blocking read
 
-                        if (bytesRead > 0) {
-                            bufferLength += bytesRead;
+                        if (data == -1) {
+                            continue;
+                        }
+
+                        char c = (char) data;
+                        lastKey = c ;
+                        
+                        if ((c >= '0' && c <= '9') || c == '.' || c == 'K') {
+                            if (bufferLength < buffer.length) {
+                                buffer[bufferLength++] = (byte) c; // Add the digit, dot, or 'K'
+                            }
+                        } else if (c == '+' || c == '-' || c == '*' || c == '/' || c == '=') {
+                            if (bufferLength > 0) {
+                                // Loop from the last character in the buffer backward
+                                for (int i = bufferLength - 1; i >= 0; i--) {
+                                    byte lastChar = buffer[i];
+
+                                    if (lastChar != 'K') {
+                                        // If it's an operator, overwrite it
+                                        if (lastChar == '+' || lastChar == '-' || lastChar == '*' || lastChar == '/' || lastChar == '=') {
+                                            buffer[i] = (byte) c; // Overwrite the operator
+                                            // System.out.println("Overwritten operator: " + c); // Log when overwriting occurs
+                                        } else {
+                                            buffer[bufferLength++] = (byte) c;
+                                        }
+
+                                        break; // Exit the loop after finding the first non-'K' character
+                                    }
+                                }
+                            }
+                            else 
+                            {
+                                buffer[bufferLength++] = '0';
+                                buffer[bufferLength++] = (byte) c; // Add the operator at the start
+                                System.out.println("Added operator at start: " + c); // Log when adding operator at start
+                            
+                            }
+                        } else {
+                                
                         }
                     }
+
                 }
-            } catch (Exception e) {
-                readError = true; // Set error flag if reading fails to be able to ask the user to reconnect
+            } catch (IOException e) {
+                readError = true;
                 System.err.println("Error reading data: " + e.getMessage());
             }
         }
+
     }
 
     /*
@@ -117,20 +154,17 @@ public class Serial_Handler {
      */
     public synchronized char[] readBuffer() {
         if (readError) {
-            return null; // Indicate failure
+            return null;
         }
 
         if (bufferLength == 0) {
-            return new char[0]; // No data, return empty array
+            return new char[0];
         }
 
         char[] data = new char[bufferLength];
         for (int i = 0; i < bufferLength; i++) {
-            data[i] = (char) buffer[i]; // Convert byte to char
+            data[i] = (char) buffer[i];
         }
-
-        // Clear buffer after reading
-        bufferLength = 0;
 
         return data;
     }
@@ -160,9 +194,6 @@ public class Serial_Handler {
         char[] filteredData = new char[newLength];
         System.arraycopy(tempBuffer, 0, filteredData, 0, newLength);
 
-        // Clear buffer after reading
-        bufferLength = 0;
-
         return filteredData;
     }
 
@@ -179,7 +210,7 @@ public class Serial_Handler {
             return '\0'; // No data available
         }
 
-        return (char) buffer[bufferLength - 1];
+        return lastKey;
     }
 
     /*
