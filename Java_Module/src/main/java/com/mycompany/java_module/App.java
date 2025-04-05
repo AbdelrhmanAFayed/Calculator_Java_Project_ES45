@@ -19,13 +19,10 @@ public class App extends Application {
 
     @Override
     public void start(Stage stage) throws IOException {
-        scene = new Scene(loadFXML("primary"), 380, 550);
-//        stage.initStyle(StageStyle.UNDECORATED);      // Remove window decoration
-        stage.initStyle(StageStyle.UTILITY);   // Removes window decorations (optional)
-        stage.setOpacity(1);  // Set the opacity of the entire window
+        scene = new Scene(loadFXML("primary"), 350, 500);
         stage.setTitle("Calculator");
-//        stage.initStyle(StageStyle.TRANSPARENT);     // Make the window transparent
-//        scene.setFill(Color.TRANSPARENT);                   // Set scene to transparent
+        stage.initStyle(StageStyle.TRANSPARENT);     // Make the window transparent
+        scene.setFill(Color.TRANSPARENT);            // Set scene to transparent
         
         stage.setScene(scene);
         stage.show();

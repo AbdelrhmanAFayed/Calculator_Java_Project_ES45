@@ -1,0 +1,68 @@
+//
+// !!! WARNING !!! AUTO-GENERATED FILE!
+// PLEASE DO NOT MODIFY IT AND USE "platformio.ini":
+// https://docs.platformio.org/page/projectconf/section_env_build.html#build-flags
+//
+{
+    "configurations": [
+        {
+            "name": "PlatformIO",
+            "includePath": [
+                "/home/mariam/AndroidAutomotive/JavaProject/Calculator_Java_Project_ES45/Embedded_Module/Application/include",
+                "/home/mariam/AndroidAutomotive/JavaProject/Calculator_Java_Project_ES45/Embedded_Module/Application/src",
+                "/home/mariam/.platformio/packages/framework-arduino-avr-mightycore/cores/MightyCore",
+                "/home/mariam/.platformio/packages/framework-arduino-avr-mightycore/variants/standard",
+                "/home/mariam/.platformio/packages/framework-arduino-avr-mightycore/libraries/AVR_examples/src",
+                "/home/mariam/.platformio/packages/framework-arduino-avr-mightycore/libraries/EEPROM/src",
+                "/home/mariam/.platformio/packages/framework-arduino-avr-mightycore/libraries/Flash/src",
+                "/home/mariam/.platformio/packages/framework-arduino-avr-mightycore/libraries/SD/src",
+                "/home/mariam/.platformio/packages/framework-arduino-avr-mightycore/libraries/SPI/src",
+                "/home/mariam/.platformio/packages/framework-arduino-avr-mightycore/libraries/SPI1/src",
+                "/home/mariam/.platformio/packages/framework-arduino-avr-mightycore/libraries/Servo/src",
+                "/home/mariam/.platformio/packages/framework-arduino-avr-mightycore/libraries/SoftwareSerial/src",
+                "/home/mariam/.platformio/packages/framework-arduino-avr-mightycore/libraries/Timer/src",
+                "/home/mariam/.platformio/packages/framework-arduino-avr-mightycore/libraries/Wire/src",
+                "/home/mariam/.platformio/packages/framework-arduino-avr-mightycore/libraries/Wire1/src",
+                ""
+            ],
+            "browse": {
+                "limitSymbolsToIncludedHeaders": true,
+                "path": [
+                    "/home/mariam/AndroidAutomotive/JavaProject/Calculator_Java_Project_ES45/Embedded_Module/Application/include",
+                    "/home/mariam/AndroidAutomotive/JavaProject/Calculator_Java_Project_ES45/Embedded_Module/Application/src",
+                    "/home/mariam/.platformio/packages/framework-arduino-avr-mightycore/cores/MightyCore",
+                    "/home/mariam/.platformio/packages/framework-arduino-avr-mightycore/variants/standard",
+                    "/home/mariam/.platformio/packages/framework-arduino-avr-mightycore/libraries/AVR_examples/src",
+                    "/home/mariam/.platformio/packages/framework-arduino-avr-mightycore/libraries/EEPROM/src",
+                    "/home/mariam/.platformio/packages/framework-arduino-avr-mightycore/libraries/Flash/src",
+                    "/home/mariam/.platformio/packages/framework-arduino-avr-mightycore/libraries/SD/src",
+                    "/home/mariam/.platformio/packages/framework-arduino-avr-mightycore/libraries/SPI/src",
+                    "/home/mariam/.platformio/packages/framework-arduino-avr-mightycore/libraries/SPI1/src",
+                    "/home/mariam/.platformio/packages/framework-arduino-avr-mightycore/libraries/Servo/src",
+                    "/home/mariam/.platformio/packages/framework-arduino-avr-mightycore/libraries/SoftwareSerial/src",
+                    "/home/mariam/.platformio/packages/framework-arduino-avr-mightycore/libraries/Timer/src",
+                    "/home/mariam/.platformio/packages/framework-arduino-avr-mightycore/libraries/Wire/src",
+                    "/home/mariam/.platformio/packages/framework-arduino-avr-mightycore/libraries/Wire1/src",
+                    ""
+                ]
+            },
+            "defines": [
+                "PLATFORMIO=60118",
+                "ARDUINO_AVR_ATmega32",
+                "F_CPU=16000000L",
+                "ARDUINO_ARCH_AVR",
+                "ARDUINO=10808",
+                "__AVR_ATmega32__",
+                ""
+            ],
+            "cStandard": "gnu11",
+            "cppStandard": "gnu++17",
+            "compilerPath": "/home/mariam/.platformio/packages/toolchain-atmelavr/bin/avr-gcc",
+            "compilerArgs": [
+                "-mmcu=atmega32",
+                ""
+            ]
+        }
+    ],
+    "version": 4
+}
