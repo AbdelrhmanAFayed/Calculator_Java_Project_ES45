@@ -10,9 +10,15 @@ import java.io.IOException;
 import javafx.scene.paint.Color;
 import javafx.stage.StageStyle;
 
+import serial_handler.Serial_Handler;
+
+
 /**
  * JavaFX App
  */
+
+
+
 public class App extends Application {
 
     private static Scene scene;
@@ -38,6 +44,9 @@ public class App extends Application {
     }
 
     public static void main(String[] args) {
+        Calculator calculator = new Calculator();
+        Double res = calculator.getResult("20-1000*10/100+20");
+        System.out.println(res);
         launch();
     }
 
