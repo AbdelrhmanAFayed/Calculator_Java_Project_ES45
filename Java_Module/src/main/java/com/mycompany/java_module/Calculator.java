@@ -5,7 +5,6 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
-import java.util.Stack;
 
 /**
  *
@@ -21,8 +20,22 @@ public class Calculator {
         OPERATOR_PRECEDENCIES.put('/', 2);
     }
     
+    /**
+     * 
+     * @param expression the mathematical expression with no spaces
+     * @return Result as Double and NaN for invalid expression or undefined result
+     */
     public Double getResult(String expression) {
+        if (expression == null || expression.length() == 0)
+            return Double.NaN;
+        
         String[] tokens = tokenize(expression);
+        if ((tokens.length % 2 == 0) || 
+                ((tokens.length < 2) && (isOperator(tokens[1]))))
+            return Double.NaN;
+        else if (getNumOfOperators(tokens) > tokens.length / 2)
+            return Double.NaN;
+        
         Queue<String> outputQueue = new ArrayDeque<>();
         infixToPostfix(tokens, outputQueue);
         
@@ -85,5 +98,15 @@ public class Calculator {
         }
         
         return resultStack.pop();
+    }
+
+    private int getNumOfOperators(String[] tokens) {
+        int count = 0;
+        
+        for (String token : tokens)
+            if (isOperator(token))
+                count++;
+        
+        return count;
     }
 }
