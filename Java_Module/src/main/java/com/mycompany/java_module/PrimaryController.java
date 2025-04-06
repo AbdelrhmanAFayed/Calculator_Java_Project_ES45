@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/javafx/FXMLController.java to edit this template
  */
-/*
+ /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/javafx/FXMLController.java to edit this template
  */
@@ -10,6 +10,9 @@ package com.mycompany.java_module;
 
 import java.net.URL;
 import java.util.ResourceBundle;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -21,6 +24,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import serial_handler.Serial_Handler;
 
 /**
  * FXML Controller class
@@ -33,6 +37,11 @@ public class PrimaryController implements Initializable {
     private double yOffset = 0;
     private double centerX = 0;
     private double centerY = 0;
+    private Serial_Handler serial;
+    private Thread appThread;
+    private Calculator calculator;
+    private boolean appThreadRunning = true;
+
     @FXML
     private Label operationField;
     @FXML
@@ -43,49 +52,18 @@ public class PrimaryController implements Initializable {
     private Button exitButton;
     @FXML
     private AnchorPane guiPane;
-    @FXML
-    private Button button_8;
-    @FXML
-    private Button button_7;
-    @FXML
-    private Button button_9;
-    @FXML
-    private Button button_div;
-    @FXML
-    private Button button_4;
-    @FXML
-    private Button button_5;
-    @FXML
-    private Button button_6;
-    @FXML
-    private Button button_mul;
-    @FXML
-    private Button button_1;
-    @FXML
-    private Button button_2;
-    @FXML
-    private Button button_3;
-    @FXML
-    private Button button_sub;
-    @FXML
-    private Button button_dot;
-    @FXML
-    private Button button_0;
-    @FXML
-    private Button button_eql;
-    @FXML
-    private Button button_add;
-    @FXML
-    private Button minButton;
-    @FXML
-    private Button maxButton;
 
     /**
      * Initializes the controller class.
      */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-
+        serial = new Serial_Handler();
+        serial.init(9600);
+        appThread = new Thread(this::appHandler);
+//        appThread.start();
+        calculator = new Calculator();
+        appThread.start();
     }
 
     @FXML
@@ -107,19 +85,28 @@ public class PrimaryController implements Initializable {
     private void clearDisplay(ActionEvent event) {
         resultField.setText("0");
         operationField.setText("");
+        serial.clearBuffer();
     }
 
     @FXML
     private void buttonHandler(ActionEvent event) {
-
+        Button clickedButton = (Button) event.getSource();
+        String buttonText = clickedButton.getText();   // Button's visible text
+        if (buttonText.equals("×")) {
+            buttonText = "*";
+        } else if (buttonText.equals("÷")) {
+            buttonText = "/";
+        }
+        serial.insertCharToBuffer(buttonText.charAt(0));
     }
 
     @FXML
     private void exit(ActionEvent event) {
         // Close the application
         Stage stage = (Stage) exitButton.getScene().getWindow();
+        serial.closePort();
+        appThreadRunning = false;
         stage.close();
-
     }
 
     @FXML
@@ -154,7 +141,37 @@ public class PrimaryController implements Initializable {
             stage.setWidth(bounds.getWidth());
             stage.setHeight(bounds.getHeight());
         }
-
     }
 
+    private void appHandler() {
+        while (appThreadRunning) {
+            char lastPressedKey = '\0';
+            String cleanedBuffer = new String(serial.readBufferFiltered());
+            if (!cleanedBuffer.isEmpty()) {
+                lastPressedKey = cleanedBuffer.charAt(cleanedBuffer.length() - 1);
+            }
+            if (lastPressedKey == '=') {
+                Double result = calculator.getResult(cleanedBuffer.substring(0, cleanedBuffer.length() - 1));
+                String finalResult = result.toString().equals("NaN") ? "Invalid Expression" : result.toString();
+                Platform.runLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        resultField.setText(finalResult);
+                    }
+                });
+            } else {
+                Platform.runLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        operationField.setText(cleanedBuffer);
+                    }
+                });
+            }
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(PrimaryController.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
 }
