@@ -9,6 +9,7 @@
 package com.mycompany.java_module;
 
 import java.net.URL;
+import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -39,8 +40,10 @@ public class PrimaryController implements Initializable {
     private double centerY = 0;
     private Serial_Handler serial;
     private Thread appThread;
+    private Thread keyPressEffectThread;
     private Calculator calculator;
     private boolean appThreadRunning = true;
+    private Map<Character, Button> btnsMap = null;
 
     @FXML
     private Label operationField;
@@ -52,6 +55,38 @@ public class PrimaryController implements Initializable {
     private Button exitButton;
     @FXML
     private AnchorPane guiPane;
+    @FXML
+    private Button btn7;
+    @FXML
+    private Button btn8;
+    @FXML
+    private Button btn9;
+    @FXML
+    private Button btnDiv;
+    @FXML
+    private Button btn4;
+    @FXML
+    private Button btn5;
+    @FXML
+    private Button btn6;
+    @FXML
+    private Button btnMul;
+    @FXML
+    private Button btn1;
+    @FXML
+    private Button btn2;
+    @FXML
+    private Button btn3;
+    @FXML
+    private Button btnSub;
+    @FXML
+    private Button btnEqual;
+    @FXML
+    private Button btn0;
+    @FXML
+    private Button btnDot;
+    @FXML
+    private Button btnSum;
 
     /**
      * Initializes the controller class.
@@ -61,9 +96,29 @@ public class PrimaryController implements Initializable {
         serial = new Serial_Handler();
         serial.init(9600);
         appThread = new Thread(this::appHandler);
-//        appThread.start();
+        keyPressEffectThread = new Thread(this::keyPressEffectHandler);
         calculator = new Calculator();
         appThread.start();
+        keyPressEffectThread.start();
+
+        btnsMap = Map.ofEntries(
+                Map.entry('7', btn7),
+                Map.entry('8', btn8),
+                Map.entry('9', btn9),
+                Map.entry('/', btnDiv),
+                Map.entry('4', btn4),
+                Map.entry('5', btn5),
+                Map.entry('6', btn6),
+                Map.entry('*', btnMul),
+                Map.entry('1', btn1),
+                Map.entry('2', btn2),
+                Map.entry('3', btn3),
+                Map.entry('-', btnSub),
+                Map.entry('=', btnEqual),
+                Map.entry('0', btn0),
+                Map.entry('.', btnDot),
+                Map.entry('+', btnSum)
+        );
     }
 
     @FXML
@@ -166,6 +221,32 @@ public class PrimaryController implements Initializable {
                         operationField.setText(cleanedBuffer);
                     }
                 });
+            }
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(PrimaryController.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
+
+    private void keyPressEffectHandler() {
+        boolean isStyled = false;
+        char lastStyledKey = 'z';
+        while (appThreadRunning) {
+            char lastPressedKey = serial.getLastKeyPressed();
+
+            if (lastPressedKey != 'K' && !isStyled) {
+                if (btnsMap.get(lastPressedKey) != null) {
+                    btnsMap.get(lastPressedKey).getStyleClass().add("hwButtonPressed");
+                    lastStyledKey = lastPressedKey;
+                    isStyled = true;
+                }
+            } else if (lastPressedKey == 'K' && isStyled) {
+                if (btnsMap.get(lastStyledKey) != null) {
+                    btnsMap.get(lastStyledKey).getStyleClass().remove("hwButtonPressed");
+                    isStyled = false;
+                }
             }
             try {
                 Thread.sleep(50);

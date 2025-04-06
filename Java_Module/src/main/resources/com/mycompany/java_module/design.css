@@ -8,15 +8,12 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
 */
 
 .mainPane{
-    
     -fx-background-color:transparent;
 }
 
 .gui{
-    
     -fx-background-color: linear-gradient(to bottom right, rgba(233, 97, 242, 0.9), rgba(0, 219, 222, 0.9));
     -fx-background-radius: 20px;
-    /*-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.4), 10, 0.5, 0, 4);*/
     -fx-padding: 10;
 }
 
@@ -29,8 +26,8 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
 }
 
 .result{
-     -fx-font-size: 18px;
-     -fx-text-fill: #fff;
+    -fx-font-size: 18px;
+    -fx-text-fill: #fff;
 }
 
 .button{
@@ -38,6 +35,11 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
     -fx-background-radius:0px;
     -fx-text-fill:#fff;
     -fx-font-size:28px;
+}
+
+.hwButtonPressed{
+    -fx-background-color:rgba(85,0,87,0.5);
+    -fx-cursor:hand;
 }
 
 .button:hover{
