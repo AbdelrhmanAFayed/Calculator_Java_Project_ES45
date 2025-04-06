@@ -30,6 +30,8 @@ public class Calculator {
             return Double.NaN;
         
         String[] tokens = tokenize(expression);
+        if((tokens.length == 1) && (!isOperator(tokens[0])))
+            return Double.valueOf(expression);
         if ((tokens.length % 2 == 0) || 
                 ((tokens.length < 2) && (isOperator(tokens[1]))))
             return Double.NaN;
