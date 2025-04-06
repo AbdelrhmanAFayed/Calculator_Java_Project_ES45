@@ -40,6 +40,7 @@ public class PrimaryController implements Initializable {
     private Serial_Handler serial;
     private Thread appThread;
     private Calculator calculator;
+    private boolean appThreadRunning = true;
 
     @FXML
     private Label operationField;
@@ -104,6 +105,7 @@ public class PrimaryController implements Initializable {
         // Close the application
         Stage stage = (Stage) exitButton.getScene().getWindow();
         serial.closePort();
+        appThreadRunning = false;
         stage.close();
     }
 
@@ -142,9 +144,8 @@ public class PrimaryController implements Initializable {
     }
 
     private void appHandler() {
-        while (true) {
+        while (appThreadRunning) {
             char lastPressedKey = '\0';
-//            System.out.println(serial.readBufferFiltered());
             String cleanedBuffer = new String(serial.readBufferFiltered());
             if (!cleanedBuffer.isEmpty()) {
                 lastPressedKey = cleanedBuffer.charAt(cleanedBuffer.length() - 1);
