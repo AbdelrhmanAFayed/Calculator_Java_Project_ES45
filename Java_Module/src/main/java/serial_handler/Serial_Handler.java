@@ -21,6 +21,7 @@ public class Serial_Handler {
     private Thread readThread;
     private boolean readError = false;
     private char lastKey;
+    private boolean dotKey = false;
 
     /*
     openPort checks the available ports and chooses the first one to open
@@ -103,11 +104,16 @@ public class Serial_Handler {
 
                                     if (lastChar != 'K') {
                                         // If it's an operator, overwrite it
-                                        if (lastChar == '+' || lastChar == '-' || lastChar == '*' || lastChar == '/' || lastChar == '=' || lastChar == '.') {
+                                        if (lastChar == '+' || lastChar == '-' || lastChar == '*' || lastChar == '/' || lastChar == '=') {
                                             buffer[i] = (byte) c; // Overwrite the operator
+                                            dotKey = false;
                                             // System.out.println("Overwritten operator: " + c); // Log when overwriting occurs
-                                        } else {
-                                            buffer[bufferLength++] = (byte) c;
+                                        } else if (lastChar == '.') {
+                                            if (dotKey) {
+                                            } else {
+                                                dotKey = true;
+                                                buffer[bufferLength++] = (byte) c;
+                                            }
                                         }
 
                                         break; // Exit the loop after finding the first non-'K' character
@@ -149,31 +155,29 @@ public class Serial_Handler {
 
     public synchronized void insertCharToBuffer(char c) {
         if ((c >= '0' && c <= '9') || c == 'K') {
-
             if (bufferLength < buffer.length) {
-                buffer[bufferLength++] = (byte) c;
+                buffer[bufferLength++] = (byte) c; // Add the digit, dot, or 'K'
             }
         } else if (c == '+' || c == '-' || c == '*' || c == '/' || c == '=' || c == '.') {
             if (bufferLength > 0) {
-
+                // Loop from the last character in the buffer backward
                 for (int i = bufferLength - 1; i >= 0; i--) {
                     byte lastChar = buffer[i];
 
                     if (lastChar != 'K') {
-
-                        if (lastChar == '+' || lastChar == '-' || lastChar == '*' || lastChar == '/' || lastChar == '=' || lastChar == '.') {
-                            buffer[i] = (byte) c;
-                        } else {
-                            buffer[bufferLength++] = (byte) c;
+                        // If it's an operator, overwrite it
+                        if (lastChar == '+' || lastChar == '-' || lastChar == '*' || lastChar == '/' || lastChar == '=') {
+                            buffer[i] = (byte) c; // Overwrite the operator
+                            dotKey = false;
+                            // System.out.println("Overwritten operator: " + c); // Log when overwriting occurs
+                        } else if (lastChar == '.') {
+                            if (dotKey) {
+                            } else {
+                                dotKey = true;
+                                buffer[bufferLength++] = (byte) c;
+                            }
                         }
-                        break;
                     }
-                }
-            } else {
-
-                if (bufferLength < buffer.length) {
-                    buffer[bufferLength++] = (byte) '0';  // Add a default value before the operator
-                    buffer[bufferLength++] = (byte) c; // Add the operator
                 }
             }
         }
