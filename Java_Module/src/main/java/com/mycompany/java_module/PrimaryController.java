@@ -8,6 +8,7 @@
  */
 package com.mycompany.java_module;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
@@ -22,8 +23,10 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.paint.Color;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import serial_handler.Serial_Handler;
 
 /**
@@ -35,8 +38,8 @@ public class PrimaryController implements Initializable {
 
     private double xOffset = 0;
     private double yOffset = 0;
-    private double centerX = 0;
-    private double centerY = 0;
+//    private boolean isMaximized = false;
+    private double prevX, prevY;
     private Serial_Handler serial;
     private Thread appThread;
     private Calculator calculator;
@@ -50,20 +53,20 @@ public class PrimaryController implements Initializable {
     private AnchorPane rootPane;
     @FXML
     private Button exitButton;
-    @FXML
-    private AnchorPane guiPane;
 
     /**
      * Initializes the controller class.
      */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        serial = new Serial_Handler();
-        serial.init(9600);
-        appThread = new Thread(this::appHandler);
+        if (serial == null) {
+            serial = new Serial_Handler();
+            serial.init(9600);
+            appThread = new Thread(this::appHandler);
 //        appThread.start();
-        calculator = new Calculator();
-        appThread.start();
+            calculator = new Calculator();
+            appThread.start();
+        }
     }
 
     @FXML
@@ -121,26 +124,34 @@ public class PrimaryController implements Initializable {
         Screen screen = Screen.getPrimary();
         Rectangle2D bounds = screen.getVisualBounds();
 
-        if (stage.getWidth() == bounds.getWidth() && stage.getHeight() == bounds.getHeight()) {
-            // Restore to default size
-            stage.setWidth(350);  // or your default width
-            stage.setHeight(500); // or your default height
-            System.out.println(centerX);
-            System.out.println(centerY);
-            stage.setX(centerX);
-            stage.setY(centerY);
+        prevX = stage.getX();
+        prevY = stage.getY();
 
-        } else {
-            // Maximize manually
-            centerX = stage.getX();
-            System.out.println(centerX);
-            centerY = stage.getY();
-            System.out.println(centerY);
-            stage.setX(bounds.getMinX());
-            stage.setY(bounds.getMinY());
-            stage.setWidth(bounds.getWidth());
-            stage.setHeight(bounds.getHeight());
+        try {
+            App.setRoot("secondary");
+        } catch (IOException ex) {
+            Logger.getLogger(PrimaryController.class.getName()).log(Level.SEVERE, null, ex);
         }
+        // Maximize manually
+        stage.setX(bounds.getMinX());
+        stage.setY(bounds.getMinY());
+        stage.setWidth(bounds.getWidth());
+        stage.setHeight(bounds.getHeight());
+    }
+
+    @FXML
+    private void resize(ActionEvent event) {
+        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        try {
+            App.setRoot("primary");
+        } catch (IOException ex) {
+            Logger.getLogger(PrimaryController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        // Restore to saved position and size
+        stage.setWidth(350);
+        stage.setHeight(500);
+        stage.setX(prevX);
+        stage.setY(prevY);
     }
 
     private void appHandler() {

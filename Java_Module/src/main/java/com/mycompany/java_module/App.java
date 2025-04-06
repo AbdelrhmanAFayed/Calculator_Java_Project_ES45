@@ -23,7 +23,7 @@ public class App extends Application {
         stage.setTitle("Calculator");
         stage.initStyle(StageStyle.TRANSPARENT);     // Make the window transparent
         scene.setFill(Color.TRANSPARENT);            // Set scene to transparent
-
+        stage.setResizable(true);
         stage.setScene(scene);
         stage.show();
     }
