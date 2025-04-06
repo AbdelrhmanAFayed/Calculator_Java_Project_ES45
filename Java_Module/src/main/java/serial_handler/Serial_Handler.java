@@ -22,6 +22,8 @@ public class Serial_Handler {
     private boolean readError = false;
     private char lastKey;
 
+    private boolean dotUsedInCurrentNumber = false;
+
     /*
     openPort checks the available ports and chooses the first one to open
     returns False if it fails to open Port
@@ -91,47 +93,54 @@ public class Serial_Handler {
                         char c = (char) data;
                         lastKey = c;
 
-                        if ((c >= '0' && c <= '9') || c == 'K') {
+                        if (Character.isDigit(c) || c == 'K') {
                             if (bufferLength < buffer.length) {
-                                buffer[bufferLength++] = (byte) c; // Add the digit, dot, or 'K'
+                                buffer[bufferLength++] = (byte) c;
                             }
-                        } else if (c == '+' || c == '-' || c == '*' || c == '/' || c == '=' || c == '.') {
+                        } else if (c == '.') {
+                            if (!dotUsedInCurrentNumber) {
+                                if (bufferLength < buffer.length) {
+                                    buffer[bufferLength++] = (byte) c;
+                                    dotUsedInCurrentNumber = true;
+                                }
+                            }
+                            // If dotUsedInCurrentNumber is true, skip the dot
+                        } else if (c == '+' || c == '-' || c == '*' || c == '/' || c == '=') {
+                            // Reset the dot flag when an operator is encountered
+                            dotUsedInCurrentNumber = false;
+
                             if (bufferLength > 0) {
-                                // Loop from the last character in the buffer backward
                                 for (int i = bufferLength - 1; i >= 0; i--) {
                                     byte lastChar = buffer[i];
 
                                     if (lastChar != 'K') {
-                                        // If it's an operator, overwrite it
                                         if (lastChar == '+' || lastChar == '-' || lastChar == '*' || lastChar == '/' || lastChar == '=' || lastChar == '.') {
                                             buffer[i] = (byte) c; // Overwrite the operator
-                                            // System.out.println("Overwritten operator: " + c); // Log when overwriting occurs
                                         } else {
-                                            buffer[bufferLength++] = (byte) c;
+                                            if (bufferLength < buffer.length) {
+                                                buffer[bufferLength++] = (byte) c;
+                                            }
                                         }
-
-                                        break; // Exit the loop after finding the first non-'K' character
+                                        break;
                                     }
                                 }
                             } else {
-                                buffer[bufferLength++] = '0';
-                                buffer[bufferLength++] = (byte) c; // Add the operator at the start
-                                System.out.println("Added operator at start: " + c); // Log when adding operator at start
-
+                                if (bufferLength + 1 < buffer.length) {
+                                    buffer[bufferLength++] = '0';
+                                    buffer[bufferLength++] = (byte) c;
+                                    System.out.println("Added operator at start: " + c);
+                                }
                             }
-                        } else {
-
                         }
                     }
-
                 }
             } catch (IOException e) {
                 readError = true;
                 System.err.println("Error reading data: " + e.getMessage());
             }
         }
-
     }
+
 
     /*
     init method opens the port to the correct baudRate and if opened starts the reading thread
@@ -149,31 +158,40 @@ public class Serial_Handler {
 
     public synchronized void insertCharToBuffer(char c) {
         if ((c >= '0' && c <= '9') || c == 'K') {
-
             if (bufferLength < buffer.length) {
                 buffer[bufferLength++] = (byte) c;
             }
-        } else if (c == '+' || c == '-' || c == '*' || c == '/' || c == '=' || c == '.') {
-            if (bufferLength > 0) {
+        } else if (c == '.') {
+            if (!dotUsedInCurrentNumber) {
+                if (bufferLength < buffer.length) {
+                    buffer[bufferLength++] = (byte) c;
+                    dotUsedInCurrentNumber = true;
+                }
+            }
+            // If dotUsedInCurrentNumber is true, do nothing (skip extra dots)
+        } else if (c == '+' || c == '-' || c == '*' || c == '/' || c == '=') {
+            // Reset dot flag on operator input
+            dotUsedInCurrentNumber = false;
 
+            if (bufferLength > 0) {
                 for (int i = bufferLength - 1; i >= 0; i--) {
                     byte lastChar = buffer[i];
 
                     if (lastChar != 'K') {
-
                         if (lastChar == '+' || lastChar == '-' || lastChar == '*' || lastChar == '/' || lastChar == '=' || lastChar == '.') {
-                            buffer[i] = (byte) c;
+                            buffer[i] = (byte) c; // Overwrite existing operator
                         } else {
-                            buffer[bufferLength++] = (byte) c;
+                            if (bufferLength < buffer.length) {
+                                buffer[bufferLength++] = (byte) c;
+                            }
                         }
                         break;
                     }
                 }
             } else {
-
-                if (bufferLength < buffer.length) {
-                    buffer[bufferLength++] = (byte) '0';  // Add a default value before the operator
-                    buffer[bufferLength++] = (byte) c; // Add the operator
+                if (bufferLength + 1 < buffer.length) {
+                    buffer[bufferLength++] = (byte) '0';
+                    buffer[bufferLength++] = (byte) c;
                 }
             }
         }
