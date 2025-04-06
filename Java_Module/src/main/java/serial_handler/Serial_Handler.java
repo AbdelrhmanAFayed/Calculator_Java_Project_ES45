@@ -260,13 +260,13 @@ public class Serial_Handler {
                         }
                     } else {
                         Serial_Handler.this.closePort();
-                        System.out.print("Attempting to reconnect");
+                        // System.out.print("Attempting to reconnect");
                         while (true) {
                             if (Serial_Handler.this.init(9600)) {
                                 portConnected = true;
                                 break;
                             }
-                            System.out.println("Attempting to reconnect");
+                           // System.out.println("Attempting to reconnect");
 
                             try {
                                 Thread.sleep(50);
