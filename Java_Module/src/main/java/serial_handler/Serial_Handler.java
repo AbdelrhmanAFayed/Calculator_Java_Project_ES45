@@ -23,7 +23,6 @@ public class Serial_Handler {
     private Thread readThread;
     private boolean readError = false;
     private char lastKey;
-    private int timeout = 500;
 
     private boolean portConnected = false;
     private boolean dotKey = false;
