@@ -7,6 +7,8 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import javafx.scene.paint.Color;
+import javafx.stage.StageStyle;
 
 /**
  * JavaFX App
@@ -17,7 +19,11 @@ public class App extends Application {
 
     @Override
     public void start(Stage stage) throws IOException {
-        scene = new Scene(loadFXML("primary"), 640, 480);
+        scene = new Scene(loadFXML("primary"), 350, 500);
+        stage.setTitle("Calculator");
+        stage.initStyle(StageStyle.TRANSPARENT);     // Make the window transparent
+        scene.setFill(Color.TRANSPARENT);            // Set scene to transparent
+        
         stage.setScene(scene);
         stage.show();
     }
@@ -32,6 +38,9 @@ public class App extends Application {
     }
 
     public static void main(String[] args) {
+        Calculator calculator = new Calculator();
+        Double res = calculator.getResult("20-1000*10/100+20");
+        System.out.println(res);
         launch();
     }
 
