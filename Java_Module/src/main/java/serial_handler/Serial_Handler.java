@@ -7,6 +7,8 @@ package serial_handler;
 import com.fazecast.jSerialComm.*;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -21,8 +23,10 @@ public class Serial_Handler {
     private Thread readThread;
     private boolean readError = false;
     private char lastKey;
+    private int timeout = 500 ;
 
-    private boolean dotUsedInCurrentNumber = false;
+    private boolean portConnected = false;
+    private boolean dotKey = false;
 
     /*
     openPort checks the available ports and chooses the first one to open
@@ -77,60 +81,86 @@ public class Serial_Handler {
     /*
     ReaderThread to implemnt the runnable needed to read the data incoming in the background
      */
+    
     private class ReaderThread implements Runnable {
 
+        
+         
         @Override
         public void run() {
             try {
+                
                 while (serialPort != null && serialPort.isOpen() && inputStream != null) {
-                    if (inputStream.available() > 0) {
-                        int data = inputStream.read(); // Blocking read
+                    if (portConnected) {
 
-                        if (data == -1) {
-                            continue;
-                        }
+                        if (inputStream.available() > 0) {
+                            int data = inputStream.read(); // Blocking read
 
-                        char c = (char) data;
-                        lastKey = c;
-
-                        if (Character.isDigit(c) || c == 'K') {
-                            if (bufferLength < buffer.length) {
-                                buffer[bufferLength++] = (byte) c;
+                            if (data == -1) {
+                                continue;
                             }
-                        } else if (c == '.') {
-                            if (!dotUsedInCurrentNumber) {
+
+                            char c = (char) data;
+                            lastKey = c;
+
+                            if (Character.isDigit(c) || c == 'K') {
                                 if (bufferLength < buffer.length) {
                                     buffer[bufferLength++] = (byte) c;
-                                    dotUsedInCurrentNumber = true;
                                 }
-                            }
-                            // If dotUsedInCurrentNumber is true, skip the dot
-                        } else if (c == '+' || c == '-' || c == '*' || c == '/' || c == '=') {
-                            // Reset the dot flag when an operator is encountered
-                            dotUsedInCurrentNumber = false;
-
-                            if (bufferLength > 0) {
-                                for (int i = bufferLength - 1; i >= 0; i--) {
-                                    byte lastChar = buffer[i];
-
-                                    if (lastChar != 'K') {
-                                        if (lastChar == '+' || lastChar == '-' || lastChar == '*' || lastChar == '/' || lastChar == '=' || lastChar == '.') {
-                                            buffer[i] = (byte) c; // Overwrite the operator
-                                        } else {
-                                            if (bufferLength < buffer.length) {
-                                                buffer[bufferLength++] = (byte) c;
-                                            }
-                                        }
-                                        break;
+                            } else if (c == '.') {
+                                if (!dotKey) {
+                                    if (bufferLength < buffer.length) {
+                                        buffer[bufferLength++] = (byte) c;
+                                        dotKey = true;
                                     }
                                 }
-                            } else {
-                                if (bufferLength + 1 < buffer.length) {
-                                    buffer[bufferLength++] = '0';
-                                    buffer[bufferLength++] = (byte) c;
-                                    System.out.println("Added operator at start: " + c);
+                                // If dotKey is true, skip the dot
+                            } else if (c == '+' || c == '-' || c == '*' || c == '/' || c == '=') {
+                                // Reset the dot flag when an operator is encountered
+                                dotKey = false;
+
+                                if (bufferLength > 0) {
+                                    for (int i = bufferLength - 1; i >= 0; i--) {
+                                        byte lastChar = buffer[i];
+
+                                        if (lastChar != 'K') {
+                                            if (lastChar == '+' || lastChar == '-' || lastChar == '*' || lastChar == '/' || lastChar == '=' || lastChar == '.') {
+                                                buffer[i] = (byte) c; // Overwrite the operator
+                                            } else {
+                                                if (bufferLength < buffer.length) {
+                                                    buffer[bufferLength++] = (byte) c;
+                                                }
+                                            }
+                                            break;
+                                        }
+                                    }
+                                } else {
+                                    if (bufferLength + 1 < buffer.length) {
+                                        buffer[bufferLength++] = '0';
+                                        buffer[bufferLength++] = (byte) c;
+                                        System.out.println("Added operator at start: " + c);
+                                    }
                                 }
                             }
+                        }
+                    }
+                    else{
+                        Serial_Handler.this.closePort();
+                        System.out.print("Attempting to reconnect");
+                        while(true )
+                        {
+                        if(Serial_Handler.this.init(9600))
+                        {
+                            portConnected = true ;
+                            break;
+                        }
+                        System.out.println("Attempting to reconnect");
+                       
+                        try {
+                            Thread.sleep(50);
+                        } catch (InterruptedException ex) {
+                            Logger.getLogger(Serial_Handler.class.getName()).log(Level.SEVERE, null, ex);
+                        }
                         }
                     }
                 }
@@ -146,6 +176,7 @@ public class Serial_Handler {
     init method opens the port to the correct baudRate and if opened starts the reading thread
      */
     public boolean init(int baudRate) {
+
         if (!openPort(baudRate)) {
             return false;
         }
@@ -153,7 +184,24 @@ public class Serial_Handler {
         inputStream = serialPort.getInputStream();
         readThread = new Thread(new ReaderThread());
         readThread.start();
+        portConnected = true;
+
+        serialPort.addDataListener(new SerialPortDataListener() {
+            @Override
+            public int getListeningEvents() {
+
+                return SerialPort.LISTENING_EVENT_PORT_DISCONNECTED;
+
+            }
+
+            @Override
+            public void serialEvent(SerialPortEvent event) {
+                portConnected = false;
+            }
+        });
+
         return true;
+
     }
 
     public synchronized void insertCharToBuffer(char c) {
@@ -162,16 +210,16 @@ public class Serial_Handler {
                 buffer[bufferLength++] = (byte) c;
             }
         } else if (c == '.') {
-            if (!dotUsedInCurrentNumber) {
+            if (!dotKey) {
                 if (bufferLength < buffer.length) {
                     buffer[bufferLength++] = (byte) c;
-                    dotUsedInCurrentNumber = true;
+                    dotKey = true;
                 }
             }
-            // If dotUsedInCurrentNumber is true, do nothing (skip extra dots)
+            // If dotKey is true, do nothing (skip extra dots)
         } else if (c == '+' || c == '-' || c == '*' || c == '/' || c == '=') {
             // Reset dot flag on operator input
-            dotUsedInCurrentNumber = false;
+            dotKey = false;
 
             if (bufferLength > 0) {
                 for (int i = bufferLength - 1; i >= 0; i--) {
@@ -221,9 +269,7 @@ public class Serial_Handler {
     Reads the available buffered data after removing every instance of No key pressed
      */
     public synchronized char[] readBufferFiltered() {
-        if (readError) {
-            return null; // Indicate failure
-        }
+      
 
         if (bufferLength == 0) {
 
@@ -281,4 +327,5 @@ public class Serial_Handler {
             System.out.println("Serial port closed.");
         }
     }
+
 }
