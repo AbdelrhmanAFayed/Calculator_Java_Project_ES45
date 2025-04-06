@@ -144,8 +144,10 @@ public class PrimaryController implements Initializable {
     }
 
     private void appHandler() {
+        boolean isResult = false;
         while (appThreadRunning) {
             char lastPressedKey = '\0';
+            
             String cleanedBuffer = new String(serial.readBufferFiltered());
             if (!cleanedBuffer.isEmpty()) {
                 lastPressedKey = cleanedBuffer.charAt(cleanedBuffer.length() - 1);
@@ -153,6 +155,7 @@ public class PrimaryController implements Initializable {
             if (lastPressedKey == '=') {
                 Double result = calculator.getResult(cleanedBuffer.substring(0, cleanedBuffer.length() - 1));
                 String finalResult = result.toString().equals("NaN") ? "Invalid Expression" : result.toString();
+                isResult = true;
                 Platform.runLater(new Runnable() {
                     @Override
                     public void run() {
@@ -160,12 +163,19 @@ public class PrimaryController implements Initializable {
                     }
                 });
             } else {
+                if (isResult) {
+                    serial.clearBuffer();
+                    serial.insertCharToBuffer(lastPressedKey);
+                    isResult = false ;
+                }
+
                 Platform.runLater(new Runnable() {
                     @Override
                     public void run() {
                         operationField.setText(cleanedBuffer);
                     }
                 });
+
             }
             try {
                 Thread.sleep(50);

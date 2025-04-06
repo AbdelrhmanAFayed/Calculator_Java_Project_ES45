@@ -7,6 +7,8 @@ package serial_handler;
 import com.fazecast.jSerialComm.*;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -21,6 +23,41 @@ public class Serial_Handler {
     private Thread readThread;
     private boolean readError = false;
     private char lastKey;
+
+    private boolean portConnected = false;
+    private boolean dotKey = false;
+
+    /*
+    init method opens the port to the correct baudRate and if opened starts the reading thread
+     */
+    public boolean init(int baudRate) {
+
+        if (!openPort(baudRate)) {
+            return false;
+        }
+
+        inputStream = serialPort.getInputStream();
+        readThread = new Thread(new ReaderThread());
+        readThread.start();
+        portConnected = true;
+
+        serialPort.addDataListener(new SerialPortDataListener() {
+            @Override
+            public int getListeningEvents() {
+
+                return SerialPort.LISTENING_EVENT_PORT_DISCONNECTED;
+
+            }
+
+            @Override
+            public void serialEvent(SerialPortEvent event) {
+                portConnected = false;
+            }
+        });
+
+        return true;
+
+    }
 
     /*
     openPort checks the available ports and chooses the first one to open
@@ -72,120 +109,14 @@ public class Serial_Handler {
         }
     }
 
-    /*
-    ReaderThread to implemnt the runnable needed to read the data incoming in the background
-     */
-    private class ReaderThread implements Runnable {
-
-        @Override
-        public void run() {
-            try {
-                while (serialPort != null && serialPort.isOpen() && inputStream != null) {
-                    if (inputStream.available() > 0) {
-                        int data = inputStream.read(); // Blocking read
-
-                        if (data == -1) {
-                            continue;
-                        }
-
-                        char c = (char) data;
-                        lastKey = c;
-
-                        if ((c >= '0' && c <= '9') || c == 'K') {
-                            if (bufferLength < buffer.length) {
-                                buffer[bufferLength++] = (byte) c; // Add the digit, dot, or 'K'
-                            }
-                        } else if (c == '+' || c == '-' || c == '*' || c == '/' || c == '=' || c == '.') {
-                            if (bufferLength > 0) {
-                                // Loop from the last character in the buffer backward
-                                for (int i = bufferLength - 1; i >= 0; i--) {
-                                    byte lastChar = buffer[i];
-
-                                    if (lastChar != 'K') {
-                                        // If it's an operator, overwrite it
-                                        if (lastChar == '+' || lastChar == '-' || lastChar == '*' || lastChar == '/' || lastChar == '=' || lastChar == '.') {
-                                            buffer[i] = (byte) c; // Overwrite the operator
-                                            // System.out.println("Overwritten operator: " + c); // Log when overwriting occurs
-                                        } else {
-                                            buffer[bufferLength++] = (byte) c;
-                                        }
-
-                                        break; // Exit the loop after finding the first non-'K' character
-                                    }
-                                }
-                            } else {
-                                buffer[bufferLength++] = '0';
-                                buffer[bufferLength++] = (byte) c; // Add the operator at the start
-                                System.out.println("Added operator at start: " + c); // Log when adding operator at start
-
-                            }
-                        } else {
-
-                        }
-                    }
-
-                }
-            } catch (IOException e) {
-                readError = true;
-                System.err.println("Error reading data: " + e.getMessage());
-            }
-        }
-
-    }
-
-    /*
-    init method opens the port to the correct baudRate and if opened starts the reading thread
-     */
-    public boolean init(int baudRate) {
-        if (!openPort(baudRate)) {
-            return false;
-        }
-
-        inputStream = serialPort.getInputStream();
-        readThread = new Thread(new ReaderThread());
-        readThread.start();
-        return true;
-    }
-
     public synchronized void insertCharToBuffer(char c) {
-        if ((c >= '0' && c <= '9') || c == 'K') {
-
-            if (bufferLength < buffer.length) {
-                buffer[bufferLength++] = (byte) c;
-            }
-        } else if (c == '+' || c == '-' || c == '*' || c == '/' || c == '=' || c == '.') {
-            if (bufferLength > 0) {
-
-                for (int i = bufferLength - 1; i >= 0; i--) {
-                    byte lastChar = buffer[i];
-
-                    if (lastChar != 'K') {
-
-                        if (lastChar == '+' || lastChar == '-' || lastChar == '*' || lastChar == '/' || lastChar == '=' || lastChar == '.') {
-                            buffer[i] = (byte) c;
-                        } else {
-                            buffer[bufferLength++] = (byte) c;
-                        }
-                        break;
-                    }
-                }
-            } else {
-
-                if (bufferLength < buffer.length) {
-                    buffer[bufferLength++] = (byte) '0';  // Add a default value before the operator
-                    buffer[bufferLength++] = (byte) c; // Add the operator
-                }
-            }
-        }
+        processCharToBuffer(c);
     }
 
     /*
     Reads the available buffered data
      */
     public synchronized char[] readBuffer() {
-        if (readError) {
-            return null;
-        }
 
         if (bufferLength == 0) {
             return new char[0];
@@ -203,9 +134,6 @@ public class Serial_Handler {
     Reads the available buffered data after removing every instance of No key pressed
      */
     public synchronized char[] readBufferFiltered() {
-        if (readError) {
-            return null; // Indicate failure
-        }
 
         if (bufferLength == 0) {
 
@@ -231,7 +159,7 @@ public class Serial_Handler {
     /*
     Gets the Current key pressed so The GUI can be updated if returns 'K' no key is pressed
      */
-    public synchronized char getLastKeyPressed() {
+    public synchronized char getCurrentKeyPressed() {
         if (readError) {
             return '\0'; // Indicate failure with null character
         }
@@ -263,4 +191,96 @@ public class Serial_Handler {
             System.out.println("Serial port closed.");
         }
     }
+
+    private void processCharToBuffer(char c) {
+        if (Character.isDigit(c) || c == 'K') {
+            if (bufferLength < buffer.length) {
+                buffer[bufferLength++] = (byte) c;
+            }
+        } else if (c == '.') {
+            if (!dotKey) {
+                if (bufferLength < buffer.length) {
+                    buffer[bufferLength++] = (byte) c;
+                    dotKey = true;
+                }
+            }
+            // If dotKey is true, skip the dot
+        } else if (c == '+' || c == '-' || c == '*' || c == '/' || c == '=') {
+            // Reset the dot flag when an operator is encountered
+            dotKey = false;
+
+            if (bufferLength > 0) {
+                for (int i = bufferLength - 1; i >= 0; i--) {
+                    byte lastChar = buffer[i];
+
+                    if (lastChar != 'K') {
+                        if (lastChar == '+' || lastChar == '-' || lastChar == '*' || lastChar == '/' || lastChar == '=' || lastChar == '.') {
+                            buffer[i] = (byte) c; // Overwrite the operator
+                        } else {
+                            if (bufferLength < buffer.length) {
+                                buffer[bufferLength++] = (byte) c;
+                            }
+                        }
+                        break;
+                    }
+                }
+            } else {
+                if (bufferLength + 1 < buffer.length) {
+                    buffer[bufferLength++] = '0';
+                    buffer[bufferLength++] = (byte) c;
+                    System.out.println("Added operator at start: " + c);
+                }
+            }
+        }
+    }
+
+    /*
+    ReaderThread to implemnt the runnable needed to read the data incoming in the background
+     */
+    private class ReaderThread implements Runnable {
+
+        @Override
+        public void run() {
+            try {
+
+                while (serialPort != null && serialPort.isOpen() && inputStream != null) {
+                    if (portConnected) {
+
+                        if (inputStream.available() > 0) {
+                            int data = inputStream.read(); // Blocking read
+
+                            if (data == -1) {
+                                continue;
+                            }
+
+                            char c = (char) data;
+                            lastKey = c;
+
+                            processCharToBuffer(c);
+                        }
+                    } else {
+                        Serial_Handler.this.closePort();
+                        System.out.print("Attempting to reconnect");
+                        while (true) {
+                            if (Serial_Handler.this.init(9600)) {
+                                portConnected = true;
+                                break;
+                            }
+                            System.out.println("Attempting to reconnect");
+
+                            try {
+                                Thread.sleep(50);
+                            } catch (InterruptedException ex) {
+                                Logger.getLogger(Serial_Handler.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                readError = true;
+                System.err.println("Error reading data: " + e.getMessage());
+            }
+        }
+    }
+
 }
