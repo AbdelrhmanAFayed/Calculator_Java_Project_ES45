@@ -10,8 +10,6 @@ import java.io.IOException;
 import javafx.scene.paint.Color;
 import javafx.stage.StageStyle;
 
-import serial_handler.Serial_Handler;
-
 /**
  * JavaFX App
  */
