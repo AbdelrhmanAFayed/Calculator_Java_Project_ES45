@@ -244,7 +244,7 @@ public class PrimaryController implements Initializable {
         boolean isStyled = false;
         char lastStyledKey = 'z';
         while (appThreadRunning) {
-            char lastPressedKey = serial.getLastKeyPressed();
+            char lastPressedKey = serial.getCurrentKeyPressed();
 
             if (lastPressedKey != 'K' && !isStyled) {
                 if (btnsMap.get(lastPressedKey) != null) {
