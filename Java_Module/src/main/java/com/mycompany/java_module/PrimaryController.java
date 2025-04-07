@@ -8,6 +8,7 @@
  */
 package com.mycompany.java_module;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.Map;
 import java.util.ResourceBundle;
@@ -36,14 +37,13 @@ public class PrimaryController implements Initializable {
 
     private double xOffset = 0;
     private double yOffset = 0;
-    private double centerX = 0;
-    private double centerY = 0;
+    private double prevX, prevY;
     private Serial_Handler serial;
-    private Thread appThread;
-    private Thread keyPressEffectThread;
+    private static Thread appThread;
+    private static Thread keyPressEffectThread;
     private Calculator calculator;
-    private boolean appThreadRunning = true;
-    private Map<Character, Button> btnsMap = null;
+    private volatile boolean appThreadRunning = true;
+    private static Map<Character, Button> btnsMap = null;
 
     @FXML
     private Label operationField;
@@ -93,43 +93,65 @@ public class PrimaryController implements Initializable {
      */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        serial = new Serial_Handler();
-        serial.init(9600);
-        appThread = new Thread(this::appHandler);
-        keyPressEffectThread = new Thread(this::keyPressEffectHandler);
-        calculator = new Calculator();
-        appThread.start();
-        keyPressEffectThread.start();
+        if (serial == null) {
+            serial = App.getSerial();
+            appThread = new Thread(this::appHandler);
+            keyPressEffectThread = new Thread(this::keyPressEffectHandler);
+            appThread.start();
+            keyPressEffectThread.start();
+//            if (App.getAppThread() == null) {
+//                App.setAppThread(new Thread(this::appHandler));
+//                appThread = App.getAppThread();
+//                appThread.start();
+//            } //else {
+//                appThread = App.getAppThread();
+//                appThread.start();
+//            }
+//            if (App.getKeyPressEffectThread() == null) {
+//                App.setKeyPressEffectThread(new Thread(this::keyPressEffectHandler));
+//                keyPressEffectThread = App.getKeyPressEffectThread();
+//                keyPressEffectThread.start();
+//            } //else {
+//                keyPressEffectThread = App.getKeyPressEffectThread();
+//                keyPressEffectThread.start();
+//            }
+            calculator = new Calculator();
 
-        btnsMap = Map.ofEntries(
-                Map.entry('7', btn7),
-                Map.entry('8', btn8),
-                Map.entry('9', btn9),
-                Map.entry('/', btnDiv),
-                Map.entry('4', btn4),
-                Map.entry('5', btn5),
-                Map.entry('6', btn6),
-                Map.entry('*', btnMul),
-                Map.entry('1', btn1),
-                Map.entry('2', btn2),
-                Map.entry('3', btn3),
-                Map.entry('-', btnSub),
-                Map.entry('=', btnEqual),
-                Map.entry('0', btn0),
-                Map.entry('.', btnDot),
-                Map.entry('+', btnSum)
-        );
+        }
+
+        if (btnsMap == null) {
+            btnsMap = Map.ofEntries(
+                    Map.entry('7', btn7),
+                    Map.entry('8', btn8),
+                    Map.entry('9', btn9),
+                    Map.entry('/', btnDiv),
+                    Map.entry('4', btn4),
+                    Map.entry('5', btn5),
+                    Map.entry('6', btn6),
+                    Map.entry('*', btnMul),
+                    Map.entry('1', btn1),
+                    Map.entry('2', btn2),
+                    Map.entry('3', btn3),
+                    Map.entry('-', btnSub),
+                    Map.entry('=', btnEqual),
+                    Map.entry('0', btn0),
+                    Map.entry('.', btnDot),
+                    Map.entry('+', btnSum)
+            );
+        }
     }
 
     @FXML
-    private void handleMousePressed(MouseEvent event) {
+    private void handleMousePressed(MouseEvent event
+    ) {
         // Capture the initial mouse position when pressed
         xOffset = event.getSceneX();
         yOffset = event.getSceneY();
     }
 
     @FXML
-    private void handleMouseDragged(MouseEvent event) {
+    private void handleMouseDragged(MouseEvent event
+    ) {
         // Move the window by updating its position based on mouse movement
         Stage stage = (Stage) rootPane.getScene().getWindow();
         stage.setX(event.getScreenX() - xOffset);
@@ -137,14 +159,16 @@ public class PrimaryController implements Initializable {
     }
 
     @FXML
-    private void clearDisplay(ActionEvent event) {
+    private void clearDisplay(ActionEvent event
+    ) {
         resultField.setText("0");
         operationField.setText("");
         serial.clearBuffer();
     }
 
     @FXML
-    private void buttonHandler(ActionEvent event) {
+    private void buttonHandler(ActionEvent event
+    ) {
         Button clickedButton = (Button) event.getSource();
         String buttonText = clickedButton.getText();   // Button's visible text
         if (buttonText.equals("×")) {
@@ -156,7 +180,8 @@ public class PrimaryController implements Initializable {
     }
 
     @FXML
-    private void exit(ActionEvent event) {
+    private void exit(ActionEvent event
+    ) {
         // Close the application
         Stage stage = (Stage) exitButton.getScene().getWindow();
         serial.closePort();
@@ -165,44 +190,54 @@ public class PrimaryController implements Initializable {
     }
 
     @FXML
-    private void minimize(ActionEvent event) {
+    private void minimize(ActionEvent event
+    ) {
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         stage.setIconified(true);  // Minimizes the window
     }
 
     @FXML
-    private void maximize(ActionEvent event) {
+    private void maximize(ActionEvent event
+    ) {
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         Screen screen = Screen.getPrimary();
         Rectangle2D bounds = screen.getVisualBounds();
 
-        if (stage.getWidth() == bounds.getWidth() && stage.getHeight() == bounds.getHeight()) {
-            // Restore to default size
-            stage.setWidth(350);  // or your default width
-            stage.setHeight(500); // or your default height
-            System.out.println(centerX);
-            System.out.println(centerY);
-            stage.setX(centerX);
-            stage.setY(centerY);
-
-        } else {
-            // Maximize manually
-            centerX = stage.getX();
-            System.out.println(centerX);
-            centerY = stage.getY();
-            System.out.println(centerY);
-            stage.setX(bounds.getMinX());
-            stage.setY(bounds.getMinY());
-            stage.setWidth(bounds.getWidth());
-            stage.setHeight(bounds.getHeight());
+        prevX = stage.getX();
+        prevY = stage.getY();
+        try {
+            App.setRoot("secondary");
+        } catch (IOException ex) {
+            Logger.getLogger(PrimaryController.class.getName()).log(Level.SEVERE, null, ex);
         }
+        // Maximize manually
+        stage.setX(bounds.getMinX());
+        stage.setY(bounds.getMinY());
+        stage.setWidth(bounds.getWidth());
+        stage.setHeight(bounds.getHeight());
+    }
+
+    @FXML
+    private void resize(ActionEvent event
+    ) {
+        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        try {
+            App.setRoot("primary");
+        } catch (IOException ex) {
+            Logger.getLogger(PrimaryController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        // Restore to saved position and size
+        stage.setWidth(350);
+        stage.setHeight(500);
+        stage.setX(prevX);
+        stage.setY(prevY);
     }
 
     private void appHandler() {
         boolean isResult = false;
         while (appThreadRunning) {
             char lastPressedKey = '\0';
-            
+
             String cleanedBuffer = new String(serial.readBufferFiltered());
             if (!cleanedBuffer.isEmpty()) {
                 lastPressedKey = cleanedBuffer.charAt(cleanedBuffer.length() - 1);
@@ -221,7 +256,7 @@ public class PrimaryController implements Initializable {
                 if (isResult) {
                     serial.clearBuffer();
                     serial.insertCharToBuffer(lastPressedKey);
-                    isResult = false ;
+                    isResult = false;
                 }
 
                 Platform.runLater(new Runnable() {
