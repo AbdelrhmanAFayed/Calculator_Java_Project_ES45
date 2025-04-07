@@ -29,7 +29,9 @@ The **Calculator** application runs on a PC using a JavaFX interface and support
 
 ## Project Structure
 
-![Calculator Screenshot](image.png)
+![Structure](image.png)
+
+![Java Module](image2.png)
 
 ## How It Works
 
