@@ -27,6 +27,12 @@ The **Calculator** application runs on a PC using a JavaFX interface and support
 - **AVR Microcontroller** – for the keypad interface and serial transmission
 - **USB-to-Serial Converter** – for connecting the AVR device to the PC
 
+## Project Structure
+
+![Structure](image.png)
+
+![Java Module](image2.png)
+
 ## How It Works
 
 1. The AVR microcontroller reads key presses from a connected keypad.
