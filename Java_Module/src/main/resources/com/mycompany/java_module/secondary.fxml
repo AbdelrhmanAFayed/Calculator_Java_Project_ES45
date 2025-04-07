@@ -17,8 +17,8 @@
          <children>
             <AnchorPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="273.0" prefWidth="1920.0">
                <children>
-                  <Label fx:id="resultField" alignment="CENTER_RIGHT" layoutX="60.0" layoutY="80.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="270.0" prefWidth="1800.0" style="-fx-background-radius: 60; -fx-font-size: 60; -fx-label-padding: 60 30 0 0;" styleClass="operands" stylesheets="@design.css" text="7" />
-                  <Label fx:id="operationField" layoutX="104.0" layoutY="113.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="80.0" prefWidth="1717.0" style="-fx-font-size: 60;" styleClass="result" stylesheets="@design.css" text="8" />
+                  <Label fx:id="resultField" alignment="CENTER_RIGHT" layoutX="60.0" layoutY="80.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="270.0" prefWidth="1800.0" style="-fx-background-radius: 60; -fx-font-size: 60; -fx-label-padding: 60 30 0 0;" styleClass="operands" stylesheets="@design.css" />
+                  <Label fx:id="operationField" layoutX="104.0" layoutY="113.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="80.0" prefWidth="1717.0" style="-fx-font-size: 60;" styleClass="result" stylesheets="@design.css" />
                   <Button fx:id="exitButton" layoutX="1860.0" layoutY="20.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#exit" prefHeight="40.0" prefWidth="40.0" styleClass="toolbarButton" stylesheets="@design.css">
                      <graphic>
                         <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">

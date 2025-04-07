@@ -161,11 +161,11 @@ public class Serial_Handler {
      */
     public synchronized char getCurrentKeyPressed() {
         if (readError) {
-            return '\0'; // Indicate failure with null character
+            return 'K'; // Indicate failure with null character
         }
 
         if (bufferLength == 0) {
-            return '\0'; // No data available
+            return 'K'; // No data available
         }
 
         return lastKey;
