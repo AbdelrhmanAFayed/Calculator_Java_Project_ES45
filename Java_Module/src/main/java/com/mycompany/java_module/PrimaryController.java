@@ -217,6 +217,7 @@ public class PrimaryController implements Initializable {
         stage.setHeight(bounds.getHeight());
     }
 
+    @FXML
     private void resize(ActionEvent event
     ) {
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
